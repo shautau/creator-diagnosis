@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>石榴1616 · 创作者诊断报告</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f5f5f7; font-family: Georgia, serif; color: #1d1d1f; }
+  
+  .header {
+    background: linear-gradient(135deg, #ff2d55 0%, #ff6b9d 100%);
+    color: white;
+    padding: 40px 48px 32px;
+  }
+  .header h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+  .header .sub { margin-top: 8px; opacity: 0.85; font-size: 14px; font-family: Georgia, serif; }
+  .header .badges { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge { background: rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 14px; font-size: 13px; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  
+  .section { margin-bottom: 28px; }
+  .section-title {
+    font-size: 18px; font-weight: 700; color: #1d1d1f;
+    padding-bottom: 10px; border-bottom: 2px solid #ff2d55;
+    margin-bottom: 18px;
+  }
+  .section-title span { color: #ff2d55; margin-right: 6px; }
+
+  /* 基础画像卡 */
+  .profile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat-card {
+    background: white; border-radius: 14px; padding: 20px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    text-align: center;
+  }
+  .stat-card .label { font-size: 12px; color: #86868b; margin-bottom: 6px; }
+  .stat-card .value { font-size: 26px; font-weight: 700; color: #1d1d1f; }
+  .stat-card .unit { font-size: 13px; color: #86868b; margin-left: 2px; }
+  .stat-card .sub-val { font-size: 12px; color: #86868b; margin-top: 4px; }
+
+  /* 近期趋势 */
+  .trend-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .trend-card {
+    background: white; border-radius: 14px; padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .trend-card .t-label { font-size: 12px; color: #86868b; margin-bottom: 4px; }
+  .trend-card .t-val { font-size: 22px; font-weight: 700; }
+  .trend-card .t-bench { font-size: 11px; color: #86868b; margin-top: 4px; }
+  .good { color: #30d158; }
+  .warn { color: #ff9f0a; }
+  .bad { color: #ff3b30; }
+
+  /* 图表区 */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .chart-card {
+    background: white; border-radius: 14px; padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .chart-card .c-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #1d1d1f; }
+  .chart-box { width: 100%; height: 240px; }
+
+  /* 笔记卡片 */
+  .notes-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .note-card {
+    background: white; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    transition: transform 0.2s;
+  }
+  .note-card:hover { transform: translateY(-3px); }
+  .note-card .cover {
+    width: 100%; aspect-ratio: 3/4; object-fit: cover;
+    background: #f0f0f0;
+  }
+  .note-card .note-body { padding: 10px 10px 12px; }
+  .note-card .note-type {
+    display: inline-block; font-size: 10px; padding: 2px 7px;
+    border-radius: 10px; margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .type-video { background: #ffe5e5; color: #ff2d55; }
+  .type-image { background: #e5f0ff; color: #0066cc; }
+  .note-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
+  .note-metric { font-size: 11px; color: #86868b; }
+  .note-metric b { color: #1d1d1f; font-size: 12px; }
+  .note-link { display: block; margin-top: 8px; font-size: 11px; color: #ff2d55; text-decoration: none; }
+  .high-badge { background: #fff3cd; color: #b45309; font-size: 10px; padding: 2px 6px; border-radius: 6px; margin-left: 4px; }
+
+  /* 对比分析 */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .compare-card {
+    background: white; border-radius: 14px; padding: 22px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .compare-card.best { border-top: 4px solid #30d158; }
+  .compare-card.worst { border-top: 4px solid #ff3b30; }
+  .compare-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+  .compare-card .metrics-row { display: flex; gap: 16px; margin-bottom: 14px; }
+  .m-item { text-align: center; flex: 1; }
+  .m-item .mv { font-size: 22px; font-weight: 700; }
+  .m-item .ml { font-size: 11px; color: #86868b; margin-top: 2px; }
+  .analysis-block { margin-top: 14px; }
+  .analysis-block .a-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .analysis-block ul { padding-left: 18px; }
+  .analysis-block ul li { font-size: 13px; color: #3c3c3e; line-height: 1.7; }
+
+  /* 流量来源表格 */
+  .source-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .source-table th { background: #f5f5f7; padding: 10px 12px; text-align: left; font-weight: 600; color: #86868b; }
+  .source-table td { padding: 10px 12px; border-bottom: 1px solid #f5f5f7; }
+  .source-bar { background: #ffe5e5; height: 6px; border-radius: 3px; display: inline-block; vertical-align: middle; }
+
+  /* 诊断 & 建议 */
+  .problem-list { display: flex; flex-direction: column; gap: 12px; }
+  .problem-item {
+    background: white; border-radius: 12px; padding: 16px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .p-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .p1 { background: #ff3b30; }
+  .p2 { background: #ff9f0a; }
+  .p3 { background: #ff9f0a; }
+  .p4 { background: #30d158; }
+  .p5 { background: #30d158; }
+  .p-content .p-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .p-content .p-desc { font-size: 13px; color: #3c3c3e; line-height: 1.6; }
+
+  .suggest-table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+  .suggest-table th { background: #ff2d55; color: white; padding: 12px 14px; text-align: left; font-weight: 600; }
+  .suggest-table td { padding: 12px 14px; border-bottom: 1px solid #f5f5f7; vertical-align: top; }
+  .suggest-table tr:last-child td { border-bottom: none; }
+  .suggest-table .dir { font-weight: 600; color: #ff2d55; }
+
+  .tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 0; }
+  .tip-card {
+    background: white; border-radius: 12px; padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .tip-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .tip-card .bad-tip { color: #ff3b30; font-size: 13px; margin-bottom: 6px; }
+  .tip-card .good-tip { color: #30d158; font-size: 13px; }
+  .tip-card .tip-item { font-size: 13px; line-height: 1.7; color: #3c3c3e; }
+
+  .strategy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .strat-card {
+    background: white; border-radius: 12px; padding: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06); text-align: center;
+  }
+  .strat-card .s-icon { font-size: 28px; margin-bottom: 8px; }
+  .strat-card .s-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .strat-card .s-desc { font-size: 12px; color: #86868b; line-height: 1.6; }
+
+  .footer { text-align: center; padding: 32px; color: #86868b; font-size: 12px; }
+
+  @media (max-width: 768px) {
+    .profile-grid { grid-template-columns: repeat(2, 1fr); }
+    .notes-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .tips-grid { grid-template-columns: 1fr; }
+    .strategy-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🍎 石榴1616 · 创作者诊断报告</h1>
+  <div class="sub">UID: 5a8040be11be1060383402cb &nbsp;|&nbsp; red_id: 951278265 &nbsp;|&nbsp; 生成日期: 2026-06-11</div>
+  <div class="badges">
+    <span class="badge">👧 女 · 31-35岁</span>
+    <span class="badge">📍 北京</span>
+    <span class="badge">🌿 萌娃 · 儿童时尚</span>
+    <span class="badge">🏅 账号等级 Lv.3</span>
+    <span class="badge">📷 图文倾向</span>
+    <span class="badge">🕐 创作 1816 天</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 基础画像 -->
+  <div class="section">
+    <div class="section-title"><span>①</span>基础画像</div>
+    <div class="profile-grid">
+      <div class="stat-card">
+        <div class="label">粉丝量</div>
+        <div class="value">365<span class="unit">人</span></div>
+        <div class="sub-val">真实粉丝 358</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">笔记总数</div>
+        <div class="value">102<span class="unit">篇</span></div>
+        <div class="sub-val">有效互动14篇</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">创作天数</div>
+        <div class="value">1816<span class="unit">天</span></div>
+        <div class="sub-val">约5年创作经历</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">视频占比</div>
+        <div class="value">32<span class="unit">%</span></div>
+        <div class="sub-val">图文倾向为主</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">28d 发布量</div>
+        <div class="value">4<span class="unit">篇</span></div>
+        <div class="sub-val">活跃状态</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">28d 阅读量</div>
+        <div class="value">604</div>
+        <div class="sub-val">曝光量 3537</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">28d 涨粉</div>
+        <div class="value">+4</div>
+        <div class="sub-val">增长缓慢</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">兴趣标签</div>
+        <div class="value" style="font-size:14px; padding-top:6px;">萌娃</div>
+        <div class="sub-val">亲子生活 · 婴童着装</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 近期核心指标 -->
+  <div class="section">
+    <div class="section-title"><span>②</span>近期核心指标（28d）</div>
+    <div class="trend-grid">
+      <div class="trend-card">
+        <div class="t-label">CTR（点击率）</div>
+        <div class="t-val warn">10.60%</div>
+        <div class="t-bench">大盘均值 15.72% ↓ &nbsp;｜&nbsp; 垂类粉段均值 15.87% ↓</div>
+      </div>
+      <div class="trend-card">
+        <div class="t-label">CES 转化率</div>
+        <div class="t-val warn">1.81%</div>
+        <div class="t-bench">反映互动质量，与垂类持平偏低</div>
+      </div>
+      <div class="trend-card">
+        <div class="t-label">赞藏总量（28d）</div>
+        <div class="t-val bad">28</div>
+        <div class="t-bench">平均每篇仅 7 赞藏，互动量极低</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 近期笔记数据速览 -->
+  <div class="section">
+    <div class="section-title"><span>③</span>近期笔记数据速览（近 5 篇）</div>
+    <div class="notes-grid">
+      
+      <!-- 笔记1：69ff3a5b，图文，CES最高 -->
+      <div class="note-card">
+        <img class="cover" src="http://ci.xiaohongshu.com/notes_pre_post/1040g3k031vuu2hotii004a1dal0bs0mbn36j030?imageView2/2/w/400/format/jpg" alt="封面" onerror="this.style.background='#eee'">
+        <div class="note-body">
+          <span class="note-type type-image">图文</span>
+          <div class="note-metrics">
+            <div class="note-metric"><b class="good">14.94%</b><br>CTR</div>
+            <div class="note-metric"><b class="good">4.97</b><br>CES ⭐最高</div>
+          </div>
+          <div class="note-metric" style="margin-top:6px;font-size:11px;">推荐 91.3% | 搜索 0.9%</div>
+          <a class="note-link" href="https://www.xiaohongshu.com/explore/69ff3a5b000000001a02e67b" target="_blank">查看笔记 →</a>
+        </div>
+      </div>
+
+      <!-- 笔记2：6a0532bf，图文 -->
+      <div class="note-card">
+        <img class="cover" src="http://ci.xiaohongshu.com/note_pre_post_uhdr/1040g3r83204ojqo62a704a1dal0bs0mbunar06g?imageView2/2/w/400/format/jpg" alt="封面" onerror="this.style.background='#eee'">
+        <div class="note-body">
+          <span class="note-type type-image">图文</span>
+          <div class="note-metrics">
+            <div class="note-metric"><b class="warn">14.49%</b><br>CTR</div>
+            <div class="note-metric"><b class="good">4.08</b><br>CES</div>
+          </div>
+          <div class="note-metric" style="margin-top:6px;font-size:11px;">推荐 68.8% | 关注 9.8%</div>
+          <a class="note-link" href="https://www.xiaohongshu.com/explore/6a0532bf00000000080267db" target="_blank">查看笔记 →</a>
+        </div>
+      </div>
+
+      <!-- 笔记3：6a1d9f46，视频 -->
+      <div class="note-card">
+        <img class="cover" src="http://ci.xiaohongshu.com/1040g2sg320sjp1msnklg4a1dal0bs0mbs92lo0o?imageView2/2/w/400/format/jpg" alt="封面" onerror="this.style.background='#eee'">
+        <div class="note-body">
+          <span class="note-type type-video">视频</span>
+          <div class="note-metrics">
+            <div class="note-metric"><b class="bad">10.45%</b><br>CTR</div>
+            <div class="note-metric"><b class="good">3.50</b><br>CES</div>
+          </div>
+          <div class="note-metric" style="margin-top:6px;font-size:11px;">推荐 62.9% | 视频推荐 15.8%</div>
+          <a class="note-link" href="https://www.xiaohongshu.com/explore/6a1d9f46000000000803daa9" target="_blank">查看笔记 →</a>
+        </div>
+      </div>
+
+      <!-- 笔记4：6a250fcc，图文 -->
+      <div class="note-card">
+        <img class="cover" src="http://ci.xiaohongshu.com/notes_pre_post/1040g3k83213s79gf7k704a1dal0bs0mb9u30u7g?imageView2/2/w/400/format/jpg" alt="封面" onerror="this.style.background='#eee'">
+        <div class="note-body">
+          <span class="note-type type-image">图文</span>
+          <div class="note-metrics">
+            <div class="note-metric"><b class="warn">12.92%</b><br>CTR</div>
+            <div class="note-metric"><b class="warn">2.78</b><br>CES</div>
+          </div>
+          <div class="note-metric" style="margin-top:6px;font-size:11px;">推荐 90.5% | 搜索 0.5%</div>
+          <a class="note-link" href="https://www.xiaohongshu.com/explore/6a250fcc0000000007029b6e" target="_blank">查看笔记 →</a>
+        </div>
+      </div>
+
+      <!-- 笔记5：6a21a808，视频，CES最低 -->
+      <div class="note-card">
+        <img class="cover" src="http://ci.xiaohongshu.com/1040g2sg3210hm5me7ue04a1dal0bs0mbbuvftkg?imageView2/2/w/400/format/jpg" alt="封面" onerror="this.style.background='#eee'">
+        <div class="note-body">
+          <span class="note-type type-video">视频</span>
+          <div class="note-metrics">
+            <div class="note-metric"><b class="bad">7.14%</b><br>CTR ⚠️最低</div>
+            <div class="note-metric"><b class="bad">0.70</b><br>CES ⚠️最低</div>
+          </div>
+          <div class="note-metric" style="margin-top:6px;font-size:11px;">推荐 87.7% | 关注 4.9%</div>
+          <a class="note-link" href="https://www.xiaohongshu.com/explore/6a21a8080000000006023700" target="_blank">查看笔记 →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 图表区 -->
+  <div class="section">
+    <div class="section-title"><span>④</span>数据分布分析</div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="c-title">流量来源分布（最新笔记）</div>
+        <div class="chart-box" id="sourceChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="c-title">CTR & CES 与基准对比</div>
+        <div class="chart-box" id="benchChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 最高 vs 最低对比 -->
+  <div class="section">
+    <div class="section-title"><span>⑤</span>最高互动 vs 最低互动 笔记对比</div>
+    <div class="compare-grid">
+      
+      <div class="compare-card best">
+        <h3>✅ 最高互动笔记（69ff3a5b）</h3>
+        <div class="metrics-row">
+          <div class="m-item"><div class="mv good">4.97</div><div class="ml">CES</div></div>
+          <div class="m-item"><div class="mv">14.94%</div><div class="ml">CTR</div></div>
+          <div class="m-item"><div class="mv">图文</div><div class="ml">内容形式</div></div>
+          <div class="m-item"><div class="mv">91.3%</div><div class="ml">推荐占比</div></div>
+        </div>
+        <div style="font-size:12px;color:#86868b;margin-bottom:12px;">分类：萌娃 · 儿童时尚 &nbsp;|&nbsp; 标签：未挂载兴趣标签</div>
+        <div class="analysis-block">
+          <div class="a-title">🌟 Why 好——做对了什么</div>
+          <ul>
+            <li>图文形式与内容定位高度契合，视觉感强、门槛低</li>
+            <li>CTR 14.94% 高于垂类粉段中位值（7.98%），封面吸引力强</li>
+            <li>CES 4.97 大幅超出垂类均值（1.67），引发真实共鸣</li>
+            <li>获得首页推荐 91.3% 超高占比，内容被算法认可</li>
+            <li>分类标签聚焦：萌娃·儿童时尚，垂类定位清晰</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="compare-card worst">
+        <h3>❌ 最低互动笔记（6a21a808）</h3>
+        <div class="metrics-row">
+          <div class="m-item"><div class="mv bad">0.70</div><div class="ml">CES</div></div>
+          <div class="m-item"><div class="mv bad">7.14%</div><div class="ml">CTR</div></div>
+          <div class="m-item"><div class="mv">视频</div><div class="ml">内容形式</div></div>
+          <div class="m-item"><div class="mv">87.7%</div><div class="ml">推荐占比</div></div>
+        </div>
+        <div style="font-size:12px;color:#86868b;margin-bottom:12px;">分类：萌娃·儿童时尚 / VLOG·出行休闲 &nbsp;|&nbsp; 无兴趣标签</div>
+        <div class="analysis-block">
+          <div class="a-title">💡 Why 差——问题出在哪</div>
+          <ul>
+            <li>视频形式：完播率 28.6% 高于大盘均值，但 CES 极低，说明看完了但没有互动意愿</li>
+            <li>CTR 仅 7.14%，远低于垂类均值（15.87%），封面没抓住人</li>
+            <li>分类混乱：萌娃 + VLOG·出行休闲，内容定位模糊</li>
+            <li>无兴趣标签挂载，系统不知道推给谁</li>
+            <li>CES 0.70 仅为最高笔记的 14%，互动落差悬殊</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 流量来源详表 -->
+  <div class="section">
+    <div class="section-title"><span>⑥</span>各笔记流量来源明细</div>
+    <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+      <table class="source-table">
+        <thead>
+          <tr>
+            <th>笔记</th>
+            <th>类型</th>
+            <th>首页推荐</th>
+            <th>关注页</th>
+            <th>视频推荐</th>
+            <th>搜索</th>
+            <th>个人主页</th>
+            <th>其他</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://www.xiaohongshu.com/explore/69ff3a5b000000001a02e67b" target="_blank" style="color:#ff2d55">69ff3a5b</a></td>
+            <td>图文</td>
+            <td><b>91.3%</b> <span class="source-bar" style="width:46px;background:#ff2d55"></span></td>
+            <td>2.0%</td><td>—</td><td>0.9%</td><td>2.5%</td><td>3.3%</td>
+          </tr>
+          <tr style="background:#fafafa">
+            <td><a href="https://www.xiaohongshu.com/explore/6a0532bf00000000080267db" target="_blank" style="color:#ff2d55">6a0532bf</a></td>
+            <td>图文</td>
+            <td><b>68.8%</b> <span class="source-bar" style="width:34px;background:#ff9f0a"></span></td>
+            <td>9.8%</td><td>—</td><td>0.8%</td><td>7.3%</td><td>13.3%</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.xiaohongshu.com/explore/6a1d9f46000000000803daa9" target="_blank" style="color:#ff2d55">6a1d9f46</a></td>
+            <td>视频</td>
+            <td><b>62.9%</b> <span class="source-bar" style="width:31px;background:#ff9f0a"></span></td>
+            <td>6.9%</td><td>15.8%</td><td>0.3%</td><td>8.3%</td><td>5.8%</td>
+          </tr>
+          <tr style="background:#fafafa">
+            <td><a href="https://www.xiaohongshu.com/explore/6a250fcc0000000007029b6e" target="_blank" style="color:#ff2d55">6a250fcc</a></td>
+            <td>图文</td>
+            <td><b>90.5%</b> <span class="source-bar" style="width:45px;background:#ff2d55"></span></td>
+            <td>3.6%</td><td>—</td><td>0.5%</td><td>1.9%</td><td>3.5%</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.xiaohongshu.com/explore/6a21a8080000000006023700" target="_blank" style="color:#ff2d55">6a21a808</a></td>
+            <td>视频</td>
+            <td><b>87.7%</b> <span class="source-bar" style="width:44px;background:#ff9f0a"></span></td>
+            <td>4.9%</td><td>3.1%</td><td>—</td><td>1.2%</td><td>3.1%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:12px;color:#86868b;margin-top:8px;padding-left:4px;">💡 所有笔记极度依赖首页推荐，搜索流量几乎为零——这是最大隐患，意味着内容在搜索端完全无法被发现。</div>
+  </div>
+
+  <!-- 问题诊断 -->
+  <div class="section">
+    <div class="section-title"><span>⑦</span>核心问题诊断</div>
+    <div class="problem-list">
+      <div class="problem-item">
+        <div class="p-num p1">1</div>
+        <div class="p-content">
+          <div class="p-title">🚨 CTR 严重低于大盘 —— 封面/标题缺乏吸引力</div>
+          <div class="p-desc">28d CTR 仅 10.6%，大盘均值 15.72%，垂类粉段均值 15.87%，差距超过 5 个百分点。这意味着同样的曝光，别人每 100 次有 15-16 人点进去，而石榴1616只有 10 人。封面视觉冲击力和标题信息密度是最直接的优化方向。</div>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="p-num p2">2</div>
+        <div class="p-content">
+          <div class="p-title">⚠️ 搜索流量接近于零 —— 关键词标签运营缺位</div>
+          <div class="p-desc">5 篇笔记中，搜索流量最高只有 0.9%。没有挂载兴趣标签，内容完全靠算法推荐维持。一旦推荐减少，账号流量就会断崖。儿童时尚垂类有大量搜索需求（宝宝穿搭、儿童服装、童装搭配），应主动布局关键词。</div>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="p-num p3">3</div>
+        <div class="p-content">
+          <div class="p-title">⚠️ 视频内容表现不佳 —— 图文优势未被放大</div>
+          <div class="p-desc">创作者天赋在图文（CES最高的都是图文），但视频占比达32%，且视频的 CTR 和 CES 表现均弱于图文。6a21a808 视频 CES 仅 0.70，不及最佳图文的 1/7。应聚焦图文优势，视频作为补充而非重心。</div>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="p-num p4">4</div>
+        <div class="p-content">
+          <div class="p-title">📌 内容定位模糊 —— 垂类有时偏移</div>
+          <div class="p-desc">部分笔记挂载了"VLOG·出行休闲"的分类，与核心定位"萌娃·儿童时尚"不一致。分类混乱会让推荐系统的用户画像产生噪音，影响精准分发效率。</div>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="p-num p5">5</div>
+        <div class="p-content">
+          <div class="p-title">📌 发布频率偏低 —— 28d 仅 4 篇</div>
+          <div class="p-desc">365 粉丝账号每月只发 4 篇，算法喂食不足。儿童时尚赛道竞争活跃，需要更高的发布密度才能保持账号活跃度和系统推荐权重。建议提升至 8-12 篇/月。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 内容建议 -->
+  <div class="section">
+    <div class="section-title"><span>⑧</span>内容方向建议</div>
+    <table class="suggest-table">
+      <thead>
+        <tr>
+          <th>方向</th>
+          <th>内容玩法</th>
+          <th>标题参考</th>
+          <th>预期效果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="dir">童装搭配图鉴</td>
+          <td>给孩子做每日/每周穿搭合集，清晰展示单品来源和搭配逻辑</td>
+          <td>「3岁宝宝春季7套穿搭 | 省钱又好看」</td>
+          <td>搜索流量 + 收藏率↑</td>
+        </tr>
+        <tr>
+          <td class="dir">平替 & 好物种草</td>
+          <td>小预算高颜值单品推荐，对比大牌同款，突出性价比</td>
+          <td>「30元拿下ins风童装！妈妈群已疯抢」</td>
+          <td>转化率高 + 粉丝粘性↑</td>
+        </tr>
+        <tr>
+          <td class="dir">育儿日记 · 真实感</td>
+          <td>记录孩子真实生活瞬间，强调"妈妈视角"的温度与共鸣</td>
+          <td>「被xx街的阳光骗了，但孩子的笑容值了」</td>
+          <td>互动率↑ 涨粉潜力高</td>
+        </tr>
+        <tr>
+          <td class="dir">季节性穿搭攻略</td>
+          <td>结合节气/节日/场景（入园、旅行）做专题穿搭</td>
+          <td>「幼儿园开学季｜不踩雷的5套穿搭合集」</td>
+          <td>搜索需求大 + 收藏量高</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 封面/标题优化 -->
+  <div class="section">
+    <div class="section-title"><span>⑨</span>封面 & 标题优化建议</div>
+    <div class="tips-grid">
+      <div class="tip-card">
+        <h4>🖼️ 封面优化</h4>
+        <div class="bad-tip">❌ 避免：构图松散、孩子被遮挡、色调灰暗</div>
+        <div class="bad-tip">❌ 避免：没有文字引导，让人不知内容是什么</div>
+        <div class="good-tip">✅ 应该：孩子居中/大图，表情生动，色彩明快</div>
+        <div class="good-tip">✅ 应该：封面加简短大字（如"7套穿搭"），信息一目了然</div>
+        <div class="good-tip">✅ 应该：统一视觉风格，建立品牌识别度</div>
+      </div>
+      <div class="tip-card">
+        <h4>📝 标题优化</h4>
+        <div class="bad-tip">❌ 避免：情绪化但无信息量的标题（"今天也太可爱了"）</div>
+        <div class="bad-tip">❌ 避免：没有关键词，搜索无法被发现</div>
+        <div class="good-tip">✅ 应该：包含核心关键词（宝宝穿搭 / 儿童时尚 / 童装）</div>
+        <div class="good-tip">✅ 应该：具体数字 + 场景（"3岁 / 入园 / 春季"）</div>
+        <div class="good-tip">✅ 应该：带情绪钩子（平价好看 / 妈妈必看 / 实测）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 发布策略 -->
+  <div class="section">
+    <div class="section-title"><span>⑩</span>发布策略建议</div>
+    <div class="strategy-grid">
+      <div class="strat-card">
+        <div class="s-icon">📷</div>
+        <div class="s-title">图文为主 · 视频为辅</div>
+        <div class="s-desc">图文 : 视频 = 7:3<br>图文 CES 表现稳定更强<br>先做大图文基本盘</div>
+      </div>
+      <div class="strat-card">
+        <div class="s-icon">📅</div>
+        <div class="s-title">发布频率提升</div>
+        <div class="s-desc">当前 4篇/月 → 目标 8-12篇/月<br>每周 2-3 篇保持活跃<br>节假日前发场景化内容</div>
+      </div>
+      <div class="strat-card">
+        <div class="s-icon">🔍</div>
+        <div class="s-title">搜索布局优先</div>
+        <div class="s-desc">每篇笔记必挂兴趣标签<br>标题嵌入搜索关键词<br>60% 内容为"搜索型选题"</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  📊 数据来源：小红书内部系统 &nbsp;|&nbsp; 生成时间：2026-06-11 &nbsp;|&nbsp; 数据时效：近28天
+</div>
+
+<script>
+// 流量来源饼图（最新笔记 69ff3a5b）
+var sourceChart = echarts.init(document.getElementById('sourceChart'));
+sourceChart.setOption({
+  tooltip: { trigger: 'item', formatter: '{b}: {c}%' },
+  legend: { bottom: 0, textStyle: { fontSize: 11, fontFamily: 'Georgia' } },
+  color: ['#ff2d55', '#ff9f0a', '#30d158', '#007aff', '#8e8e93'],
+  series: [{
+    type: 'pie', radius: ['40%', '65%'],
+    center: ['50%', '42%'],
+    data: [
+      { value: 91.3, name: '首页推荐' },
+      { value: 2.5, name: '个人主页' },
+      { value: 2.0, name: '关注页面' },
+      { value: 0.9, name: '搜索' },
+      { value: 3.3, name: '其他' }
+    ],
+    label: { formatter: '{b}\n{c}%', fontSize: 11 }
+  }]
+});
+
+// CTR & CES 对比柱状图
+var benchChart = echarts.init(document.getElementById('benchChart'));
+benchChart.setOption({
+  tooltip: { trigger: 'axis' },
+  legend: { bottom: 0, textStyle: { fontSize: 11 } },
+  color: ['#ff2d55', '#ff9f0a', '#007aff'],
+  xAxis: {
+    type: 'category',
+    data: ['CTR', 'CES'],
+    axisLabel: { fontFamily: 'Georgia', fontSize: 12 }
+  },
+  yAxis: { type: 'value', axisLabel: { fontFamily: 'Georgia' } },
+  series: [
+    {
+      name: '石榴1616 (28d)',
+      type: 'bar', barWidth: 28,
+      data: [10.60, 1.81],
+      label: { show: true, position: 'top', fontFamily: 'Georgia', fontSize: 11 }
+    },
+    {
+      name: '大盘均值',
+      type: 'bar', barWidth: 28,
+      data: [15.72, 2.59],
+      label: { show: true, position: 'top', fontFamily: 'Georgia', fontSize: 11 }
+    },
+    {
+      name: '垂类粉段均值',
+      type: 'bar', barWidth: 28,
+      data: [15.87, 1.67],
+      label: { show: true, position: 'top', fontFamily: 'Georgia', fontSize: 11 }
+    }
+  ]
+});
+
+window.addEventListener('resize', function() {
+  sourceChart.resize();
+  benchChart.resize();
+});
+</script>
+
+</body>
+</html>
